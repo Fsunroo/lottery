@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lottery Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>Lottery Contract Manager</h1>
+    <button onclick="connectWallet()">Connect Ethereum Wallet</button>
+    <h2>Add Players</h2>
+    <input type="text" id="fids" placeholder="Enter fids (comma-separated)">
+    <input type="text" id="chances" placeholder="Enter chances (comma-separated)">
+    <button onclick="addPlayers()">Submit Players</button>
+    <h2>Pick Winners</h2>
+    <button onclick="pickWinners()">Pick 10 Winners</button>
+
+    <script>
+        let web3;
+        let lotteryContract;
+        const contractAddress = 'YOUR_CONTRACT_ADDRESS';
+        const abi = [
+            // Paste your contract's ABI here
+        ];
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    web3 = new Web3(window.ethereum);
+                    lotteryContract = new web3.eth.Contract(abi, contractAddress);
+                    console.log("Wallet connected!");
+                } catch (error) {
+                    console.error("User denied account access");
+                }
+            } else {
+                console.error("Non-Ethereum browser detected. You should consider trying MetaMask!");
+            }
+        }
+
+        async function addPlayers() {
+            const fidsInput = document.getElementById('fids').value;
+            const chancesInput = document.getElementById('chances').value;
+            const accounts = await web3.eth.getAccounts();
+            const fids = fidsInput.split(',').map(fid => parseInt(fid.trim()));
+            const chances = chancesInput.split(',').map(chance => parseInt(chance.trim()));
+
+            lotteryContract.methods.addPlayers(fids, chances)
+                .send({ from: accounts[0] })
+                .then(response => {
+                    console.log("Players added!", response);
+                })
+                .catch(err => {
+                    console.error("Failed to add players", err);
+                });
+        }
+
+        async function pickWinners() {
+            const accounts = await web3.eth.getAccounts();
+            lotteryContract.methods.pickWinners()
+                .send({ from: accounts[0] })
+                .then(winners => {
+                    console.log("Winners picked: ", winners);
+                })
+                .catch(err => {
+                    console.error("Failed to pick winners", err);
+                });
+        }
+    </script>
+</body>
+</html>
